@@ -1,0 +1,39 @@
+---
+title: 'Assignment #5A: Airline Delays'
+author: "Denise Atherley"
+date: "2026-02-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Approach
+
+This assignment is asking to take the chart provided below, that describes arrival delays for two airlines across five destinations, and perform an analysis to compare the arrival delays for the two airlines.
+
+```{r echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("C:/Users/dathe/OneDrive/Documents/Misc/SPS - Data Science/Spring 2026/DATA 607 - Data Aquisition & Management/Assignment 5A Airline Delays.png")
+```
+
+The chart is presented in an image that would ultimately need to be made into a file that can be read more easily and then tidied and transformed to properly perform the analysis.
+
+My approach is to recreate the chart in excel to output a .csv file using the wide format that it is in. I will then load it into my github repository so that I can reference it in RStudio to be read and will use a combination of tidyr and dplyr to clean and transform the data. Once the data is in a better format, then I will compare the arrival delays for each airline across the various cities and use different summary statistics to accomplish this.
+
+### Load data
+
+I took the data presented and recreated it in a .csv file to use in this assignment. Which can be found in my github repository (<https://github.com/DRA-SPS27/DATA607-Week-5-Assignments/tree/main>). I am presenting a glimpse of that data below:
+
+```{r include=FALSE}
+library(tidyverse)
+library(gt)
+```
+
+```{r}
+url<-"https://raw.githubusercontent.com/DRA-SPS27/DATA607-Week-5-Assignments/refs/heads/main/D.Atherley%20-%20Airline%20Delays%20(%235A).csv"
+
+untidy_airline<-read.csv(url)
+
+glimpse(untidy_airline)
+```
