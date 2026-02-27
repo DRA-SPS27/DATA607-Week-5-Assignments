@@ -1,0 +1,25 @@
+---
+title: "Assignment #5B: ELO Calculations"
+author: "Denise Atherley"
+format: html
+editor: visual
+---
+
+## Approach
+
+This assignment is asking to look at the data from Project 1 and compare each player's actual score against their statistically expected score. In order to accomplish this I will need to use the player's ELO rating in the following probability formula:
+
+```{r echo=FALSE, out.width="50%", fig.align="left"}
+knitr::include_graphics("C:/Users/dathe/OneDrive/Pictures/Screenshots/Screenshot 2026-02-26 234403.png")
+
+```
+
+-   $R_{opp}$: The opponent's rating.
+
+-   $R_{player}$: The player's rating.
+
+I will calculate the probability of each individual match using the original dataset and will use tidyverse syntax to do so. To calculate the difference I will subtract the expected score from the total points. If the result is a positive number then they over performed and if the result is a negative number then they under performed. I will sort the data with a new differences column and easily pull the top five and the bottom five players.
+
+I suspect that I will be challenged with using the correct code syntax and will leverage an LLM to check my work through out my coding deliverable.
+
+## 
