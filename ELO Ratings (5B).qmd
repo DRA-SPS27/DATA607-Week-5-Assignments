@@ -38,9 +38,9 @@ I will be utilizing the raw txt file from Project 1 to complete this assignment.
 #| echo: true
 # Load data from github repository
 
-chess_df <- read.csv("https://raw.githubusercontent.com/DRA-SPS27/DATA607-Week-5-Assignments/refs/heads/main/chess_tournament_results.csv")
+df <- read.csv("https://raw.githubusercontent.com/DRA-SPS27/DATA607-Week-5-Assignments/refs/heads/main/chess_tournament_results.csv")
 
-chess_df
+df
 ```
 
 ### Calculate "Approximate" Expected Tournament Score
@@ -48,8 +48,11 @@ chess_df
 Since I only have the average opponent pre-rating score and not the full opponent list, I will be computing the expected tournament score by using the players rating versus the average opponent rating and then multiplying by the number of rounds played to scale it. There are a total of 7 rounds in this tournament and though not every player played all rounds, most did so I will make n_rounds = 7
 
 ```{r}
+library(tidyverse)
+library(dplyr)
+
 num_rounds <- 7
-chess_df <- chess_df %>%
+df <- df %>%
   mutate(
     Expected_Score = num_rounds * (1 / (1 + 10^((avg_opp_rating - Pre_Rating) / 400))),
     Performance_Diff = Total_Points - Expected_Score
