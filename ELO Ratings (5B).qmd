@@ -10,7 +10,7 @@ editor: visual
 This assignment is asking to look at the data from Project 1 and compare each player's actual score against their statistically expected score. In order to accomplish this I will need to use the player's ELO rating in the following probability formula:
 
 ```{r echo=FALSE, out.width="50%", fig.align="left"}
-knitr::include_graphics("C:/Users/dathe/OneDrive/Pictures/Screenshots/Screenshot 2026-02-26 234403.png")
+knitr::include_graphics("C:/Users/dathe/OneDrive/Documents/Misc/SPS - Data Science/Spring 2026/DATA 607 - Data Aquisition & Management/Screenshot 2026-02-26 234403.png")
 
 ```
 
@@ -18,8 +18,84 @@ knitr::include_graphics("C:/Users/dathe/OneDrive/Pictures/Screenshots/Screenshot
 
 -   $R_{player}$: The player's rating.
 
+-   400: is the scaling constant in the ELO system
+
 I will calculate the probability of each individual match using the original dataset and will use tidyverse syntax to do so. To calculate the difference I will subtract the expected score from the total points. If the result is a positive number then they over performed and if the result is a negative number then they under performed. I will sort the data with a new differences column and easily pull the top five and the bottom five players.
 
 I suspect that I will be challenged with using the correct code syntax and will leverage an LLM to check my work through out my coding deliverable.
 
-## 
+### Approach Update
+
+When attempting to tackle this assignment, I ran into the issue that my dataset for Project 1 contains the average pre-tournament rating of opponents rather than the full list of results per match. This means that I will need to calculate the approximate expected tournament score by applying the ELO expected score formula using the player's rating versus their average opponent rating and then scaling by the number of rounds.
+
+## Code Deliverable
+
+### Load & reformat data
+
+I will be utilizing the raw txt file from Project 1 to complete this assignment.
+
+```{r}
+#| echo: true
+# Load data from github repository
+
+chess_df <- read.csv("https://raw.githubusercontent.com/DRA-SPS27/DATA607-Week-5-Assignments/refs/heads/main/chess_tournament_results.csv")
+
+chess_df
+```
+
+### Calculate "Approximate" Expected Tournament Score
+
+Since I only have the average opponent pre-rating score and not the full opponent list, I will be computing the expected tournament score by using the players rating versus the average opponent rating and then multiplying by the number of rounds played to scale it. There are a total of 7 rounds in this tournament and though not every player played all rounds, most did so I will make n_rounds = 7
+
+```{r}
+num_rounds <- 7
+chess_df <- chess_df %>%
+  mutate(
+    Expected_Score = num_rounds * (1 / (1 + 10^((avg_opp_rating - Pre_Rating) / 400))),
+    Performance_Diff = Total_Points - Expected_Score
+  )
+
+# 3. Identify Top 5 Overperformers
+overperformers <- df %>%
+  arrange(desc(Performance_Diff)) %>%
+  head(5)
+
+# 4. Identify Top 5 Underperformers
+underperformers <- df %>%
+  arrange(Performance_Diff) %>%
+  head(5)
+
+# Display results
+print("Top 5 Overperformers:")
+print(overperformers[, c("Player_Name", "Total_Points", "Expected_Score", "Performance_Diff")])
+
+print("Top 5 Underperformers:")
+print(underperformers[, c("Player_Name", "Total_Points", "Expected_Score", "Performance_Diff")])
+```
+### Top 5 Overperformers
+
+These players performed the best relative to their expected score:
+
+Aditya Bajaj: +4.17 points difference
+
+Zachary James Houghton: +3.24 points difference
+
+Anvit Rao: +3.24 points difference
+
+Jacob Alexander Lavalley: +2.98 points difference
+
+Amiyatosh Pwnanandam: +2.88 points difference
+
+### Top 5 Underperformers
+
+These players performed the worst relative to their expected score:
+
+Ashwin Balaji: -5.15 points difference
+
+Loren Schwiebert: -2.80 points difference
+
+George Avery Jones: -2.79 points difference
+
+Gaurav Gidwani: -2.59 points difference
+
+Chiedozie Okorie: -2.38 points difference
