@@ -2,7 +2,9 @@
 title: 'Assignment #5A: Airline Delays'
 author: "Denise Atherley"
 date: "2026-02-26"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -21,6 +23,8 @@ The chart is presented in an image that would ultimately need to be made into a 
 
 My approach is to recreate the chart in excel to output a .csv file using the wide format that it is in. I will then load it into my github repository so that I can reference it in RStudio to be read and will use a combination of tidyr and dplyr to clean and transform the data. Once the data is in a better format, then I will compare the arrival delays for each airline across the various cities and use different summary statistics to accomplish this.
 
+## Code Deliverable
+
 ### Load data
 
 I took the data presented and recreated it in a .csv file to use in this assignment. Which can be found in my github repository (<https://github.com/DRA-SPS27/DATA607-Week-5-Assignments/tree/main>). I am presenting a glimpse of that data below:
@@ -31,9 +35,149 @@ library(gt)
 ```
 
 ```{r}
+# Read .csv file
+
 url<-"https://raw.githubusercontent.com/DRA-SPS27/DATA607-Week-5-Assignments/refs/heads/main/D.Atherley%20-%20Airline%20Delays%20(%235A).csv"
 
 untidy_airline<-read.csv(url)
 
 glimpse(untidy_airline)
 ```
+
+### Clean data
+
+To get to the format I need to analyze this data, I will first need to tidy it by reformatting it and populating any missing data.
+
+```{r echo=TRUE}
+# Remove the blank row between the two airlines
+
+untidy_airline <- untidy_airline[c(1,2,4,5), ]
+untidy_airline
+
+```
+
+```{r echo=TRUE}
+# Populate missing data. Establish new columns for Airline and Status and fill in values where missing
+
+untidy_airline[c(2,4),1] <- untidy_airline[c(1,3),1]
+colnames(untidy_airline)[1:2] <-c('Airline', 'Status')
+untidy_airline
+```
+
+### Long format
+
+Now that all of the rows and columns have values, I will transform the data to long format to facilitate the analysis process. To do this, I will need to make the observations my rows and the variables my columns.
+
+```{r}
+flights_long_form <- untidy_airline %>%
+  pivot_longer(
+    cols = Los.Angeles:Seattle,
+    names_to = "City",
+    values_to = "Count"
+  ) %>%
+  mutate(City = str_replace_all(City, "\\.", " "))
+
+print(flights_long_form)
+```
+
+## Comparing flight delays for the airlines
+
+### Overall comparison 
+
+I will determine the overall flight status for both airlines.
+
+```{r echo=TRUE}
+Airlines_summary <- flights_long_form %>%
+  group_by(Airline, Status) %>%
+  summarise(Total = sum(Count), .groups = "drop") %>%
+  group_by(Airline) %>%
+  mutate(
+    Grand_Total = sum(Total),
+    Percent = round(Total/Grand_Total * 100,2)
+  ) %>%
+  ungroup()
+
+Airlines_summary
+```
+
+Now that I have my overall totals for both on time and delayed flights, I will isolate just the values for the delayed flights to use in my graph comparison.
+
+```{r echo=TRUE}
+Airline_delays <- Airlines_summary %>%
+  filter(Status == "delayed") %>%
+  select(Airline, Delayed = Total, Grand_Total, Delay_Percent = Percent)
+
+Airline_delays
+```
+
+I will now visually display the delayed percentages.
+
+```{r}
+ggplot(Airline_delays, aes(x = Airline, y = Delay_Percent, fill = Airline)) +
+  geom_col() +
+  geom_text(aes(label = paste0(round(Delay_Percent, 1), "%")), vjust = -0.5, size = 4) +
+  theme_minimal() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title = "Percentage of Delayed Flights by Airline",
+    subtitle = "Aggregated overall across 5 city destinations",
+    x = "Airline",
+    y = "Delay Percentage (%)"
+  ) +
+  theme(legend.position = "none")
+
+
+```
+
+### Findings of overall comparison
+
+In looking at the aggregate comparison, I can conclude that AM West Airline had less delays than Alaska Airlines. Alaska Airlines was delayed overall 13.3% of the time, while AM West Airline was only delayed 10.9% of the time. If I was a traveler, I would certainly take this into consideration when booking a flight and will most likely end up booking with AM West Airline.
+
+### City by city comparison
+
+I will now compare the flight delays percentage for the two airlines across the five cities to determine what the discrepancies are in each city. To do that, I will need to create a new data frame for the delays in each city grouped by each airline.
+
+```{r}
+city_flights_summary <- flights_long_form %>%
+  group_by(Airline, City) %>%
+  mutate(City_Total = sum(Count)) %>%
+  ungroup() %>%
+  filter(Status == "delayed") %>%
+  mutate(Delay_Percent = round(Count / City_Total * 100,2)) %>%
+  select(Airline, City, Delayed = Count, City_Total, Delay_Percent)
+
+city_flights_summary <- city_flights_summary %>% arrange(City, Airline)
+city_flights_summary
+```
+
+I will now visually display the delayed percentages for each city.
+
+```{r}
+ggplot(city_flights_summary, aes(x = City, y = Delay_Percent, fill = Airline)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(aes(label = paste0(round(Delay_Percent, 1), "%")), 
+            position = position_dodge(width = 0.8), 
+            vjust = -0.5, 
+            size = 3.5, 
+            fontface = "bold") +
+  labs(
+    title = "Flight Delay Percentage by City and Airline",
+    subtitle = "Alaska Airlines vs. AM West across 5 Cities",
+    x = "Destination City",
+    y = "Percentage of Flights Delayed (%)",
+    fill = "Airline"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_blank()
+  ) +
+  scale_y_continuous(limits = c(0, max(city_flights_summary$Delay_Percent) + 5))
+```
+
+### Findings of city by city comparison
+
+Looking at the results of my bar graph, I can see that across all 5 cities Alaska Airlines shows a lower percentage of delays. This is a very interesting finding because my results from the overall comparison showed that Alaska Airlines is often more delayed, but these results show otherwise. Seeing these results as a traveler, I would feel more comfortable knowing that in any of these cities, flying with Alaska Airline will prove to include a flight that is not delayed.
+
+## Conclusion 
+This assignment really highlighted Simpson's Paradox, the statistical phenomenon where a trend or relationship observed within several distinct groups of data reverses or disappears when the groups are combined. In this example, even though Alaska Airlines showed to be less delayed across all of the 5 cities, what was also true is that there are often less Alaska Airline flights that fly out of those cities, compared to AM West. This reveals that the aggregated data completely masked this variable and made our results inaccurate and not representative of the actual relationship present.
